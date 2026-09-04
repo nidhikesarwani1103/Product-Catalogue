@@ -1,4 +1,4 @@
-package dev.nidhi.productservice;product
+package dev.nidhi.productservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

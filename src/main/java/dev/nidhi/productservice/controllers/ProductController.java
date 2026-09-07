@@ -52,4 +52,25 @@ public class ProductController {
         return ProductDTO.fromProduct(product);
     }
 
+    @PutMapping("/{id}")
+    public ProductDTO replaceProduct(@RequestBody ProductDTO productDTO, @PathVariable("id") Long id){
+        Product product = productService.replaceProduct(id, productDTO.toProduct());
+        return ProductDTO.fromProduct(product);
+    }
+
+    @GetMapping("/greater-than/{id}")
+    public List<ProductDTO> getProductIDGreaterThan(@PathVariable("id") Long id){
+        return productService.getProductIDGreaterThan(id)
+                .stream()
+                .map(product -> ProductDTO.fromProduct(product))
+                .toList();
+    }
+
+    @GetMapping("/category-equals-to/{categoryName}")
+    public List<ProductDTO> productCategoryNameIsEqualTo(@PathVariable("categoryName") String categoryName){
+        return productService.getProductWithCategoryNameEquals(categoryName)
+                .stream()
+                .map(product -> ProductDTO.fromProduct(product))
+                .toList();
+    }
 }

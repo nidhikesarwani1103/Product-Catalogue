@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.spi.CurrencyNameProvider;
 
 @Service("ProductServiceDBImpl")
 public class ProductService {
@@ -24,16 +25,7 @@ public class ProductService {
     }
 
     public Product createProduct(Product product) {
-        Optional<Category> category = categoryRepository.findByName(product.getCategory().getName());
-        Category categoryEntity;
-        if (category.isEmpty()) {
-            categoryEntity = new Category();
-            categoryEntity.setName(product.getCategory().getName());
-            categoryEntity = categoryRepository.save(categoryEntity);
-        }
-        else {
-            categoryEntity = category.get();
-        }
+        Category categoryEntity = getCategoryEntity(product);
         product.setCategory(categoryEntity);
         Product savedProduct = productRepository.save(product);
         return savedProduct;
@@ -87,17 +79,7 @@ public class ProductService {
             productEntity.setImageUrl(product.getImageUrl());
         }
         if(product.getCategory()!=null){
-            String categoryName = product.getCategory().getName();
-            Optional<Category> category = categoryRepository.findByName(categoryName);
-            Category categoryEntity;
-            if (category.isEmpty()) {
-                categoryEntity = new Category();
-                categoryEntity.setName(categoryName);
-                categoryEntity = categoryRepository.save(categoryEntity);
-            }
-            else {
-                categoryEntity = category.get();
-            }
+            Category categoryEntity = getCategoryEntity(product);
             productEntity.setCategory(categoryEntity);
         }
 
@@ -112,5 +94,44 @@ public class ProductService {
         }
 
         return optionalProduct.get();
+    }
+
+    public Product replaceProduct(Long id, Product product) {
+        Optional<Product> optionalProduct = productRepository.findById(id);
+        if(optionalProduct.isEmpty()){
+            throw new ProductNotFoundException("Product with id " + id + " not found");
+        }
+        product.setId(id);
+        return createProduct(product);
+    }
+
+    public List<Product> getProductIDGreaterThan(Long id){
+        return productRepository.productsGreaterThanID(id);
+    }
+
+    public List<Product> getProductWithCategoryNameEquals(String categoryName){
+        return productRepository.productCategoryNameIsEqualTo(categoryName);
+    }
+
+    public List<Product> productAndCategoryJoinWhereCategoryName(String categoryName){
+        return productRepository.productAndCategoryJoinWhereCategoryName(categoryName);
+    }
+
+
+    public Category getCategoryEntity(Product product){
+        Optional<Category> category = categoryRepository.findByName(product.getCategory().getName());
+        Category categoryEntity;
+        if (category.isEmpty()) {
+            categoryEntity = new Category();
+            categoryEntity.setName(product.getCategory().getName());
+            // this has to be done until we use cascadeType.Persist
+            // but good practice is to write code manually and not use
+            // cascade
+            categoryEntity = categoryRepository.save(categoryEntity);
+        }
+        else {
+            categoryEntity = category.get();
+        }
+        return categoryEntity;
     }
 }

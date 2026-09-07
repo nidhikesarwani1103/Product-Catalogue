@@ -103,4 +103,14 @@ public class ProductService {
 
         return productRepository.save(productEntity);
     }
+
+    public Product getProductById(Long id) {
+
+        Optional<Product> optionalProduct = productRepository.findById(id);
+        if(optionalProduct.isEmpty()){
+            throw new ProductNotFoundException("Product with id " + id + " not found");
+        }
+
+        return optionalProduct.get();
+    }
 }

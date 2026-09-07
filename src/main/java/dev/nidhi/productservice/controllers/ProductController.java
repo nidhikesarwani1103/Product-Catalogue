@@ -46,5 +46,10 @@ public class ProductController {
         return ProductDTO.fromProduct(product);
     }
 
+    @GetMapping("/{id}")
+    public ProductDTO getProductById(@PathVariable("id") Long id){
+        Product product = productService.getProductById(id);
+        return ProductDTO.fromProduct(product);
+    }
 
 }

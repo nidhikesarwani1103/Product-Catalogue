@@ -3,8 +3,11 @@ package dev.nidhi.productservice.controllers;
 import dev.nidhi.productservice.dtos.ProductDTO;
 import dev.nidhi.productservice.models.Product;
 import dev.nidhi.productservice.services.ProductService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.http.HttpResponse;
 import java.util.List;
 
 @RestController
@@ -18,59 +21,65 @@ public class ProductController {
     }
 
     @PostMapping("")
-    public ProductDTO createProduct(@RequestBody ProductDTO productDTO) {
+    public ResponseEntity<ProductDTO> createProduct(@RequestBody ProductDTO productDTO) {
         Product product = productService.createProduct(productDTO.toProduct());
-        return ProductDTO.fromProduct(product);
+        ProductDTO responseProductDTO = ProductDTO.fromProduct(product);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                             .body(responseProductDTO);
     }
 
     @GetMapping("")
-    public List<ProductDTO> getAllProducts() {
+    public ResponseEntity<List<ProductDTO>> getAllProducts() {
         List<Product> products = productService.getAllProducts();
         List<ProductDTO> productDTOS = products
                 .stream()
                 .map(product -> ProductDTO.fromProduct(product))
                 .toList();
 
-        return productDTOS;
+        return ResponseEntity.ok(productDTOS);
     }
 
     @DeleteMapping("/{id}")
-    public String deleteProduct(@PathVariable Long id) {
-        return productService.deleteProduct(id);
+    public ResponseEntity<String> deleteProduct(@PathVariable Long id) {
+        return ResponseEntity.ok(productService.deleteProduct(id));
     }
 
     @PatchMapping("/{id}")
-    public ProductDTO updateProduct(@PathVariable("id") Long id,
+    public ResponseEntity<ProductDTO> updateProduct(@PathVariable("id") Long id,
                                     @RequestBody ProductDTO productDTO) {
         Product product = productService.updateProduct(id, productDTO.toProduct());
-        return ProductDTO.fromProduct(product);
+        return ResponseEntity.ok(ProductDTO.fromProduct(product));
     }
 
     @GetMapping("/{id}")
-    public ProductDTO getProductById(@PathVariable("id") Long id){
+    public ResponseEntity<ProductDTO> getProductById(@PathVariable("id") Long id){
         Product product = productService.getProductById(id);
-        return ProductDTO.fromProduct(product);
+        return ResponseEntity.ok(ProductDTO.fromProduct(product));
     }
 
     @PutMapping("/{id}")
-    public ProductDTO replaceProduct(@RequestBody ProductDTO productDTO, @PathVariable("id") Long id){
+    public ResponseEntity<ProductDTO> replaceProduct(@RequestBody ProductDTO productDTO, @PathVariable("id") Long id){
         Product product = productService.replaceProduct(id, productDTO.toProduct());
-        return ProductDTO.fromProduct(product);
+        return ResponseEntity.ok(ProductDTO.fromProduct(product));
     }
 
     @GetMapping("/greater-than/{id}")
-    public List<ProductDTO> getProductIDGreaterThan(@PathVariable("id") Long id){
-        return productService.getProductIDGreaterThan(id)
-                .stream()
-                .map(product -> ProductDTO.fromProduct(product))
-                .toList();
+    public ResponseEntity<List<ProductDTO>> getProductIDGreaterThan(@PathVariable("id") Long id){
+        List<ProductDTO> responseList = productService
+                                            .getProductIDGreaterThan(id)
+                                            .stream()
+                                            .map(product -> ProductDTO.fromProduct(product))
+                                            .toList();
+        return ResponseEntity.ok(responseList);
     }
 
     @GetMapping("/category-equals-to/{categoryName}")
-    public List<ProductDTO> productCategoryNameIsEqualTo(@PathVariable("categoryName") String categoryName){
-        return productService.getProductWithCategoryNameEquals(categoryName)
-                .stream()
-                .map(product -> ProductDTO.fromProduct(product))
-                .toList();
+    public ResponseEntity<List<ProductDTO>> productCategoryNameIsEqualTo(@PathVariable("categoryName") String categoryName){
+        List<ProductDTO> responseList = productService
+                                            .getProductWithCategoryNameEquals(categoryName)
+                                            .stream()
+                                            .map(product -> ProductDTO.fromProduct(product))
+                                            .toList();
+        return ResponseEntity.ok(responseList);
     }
 }

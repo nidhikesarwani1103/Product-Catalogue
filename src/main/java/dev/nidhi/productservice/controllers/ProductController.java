@@ -5,6 +5,7 @@ import dev.nidhi.productservice.models.Product;
 import dev.nidhi.productservice.services.ProductService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.http.HttpResponse;
@@ -82,4 +83,10 @@ public class ProductController {
                                             .toList();
         return ResponseEntity.ok(responseList);
     }
+
+//    @GetMapping("/me")
+//    public String me(Authentication authentication) {
+//
+//        return authentication.getAuthorities().toString();
+//    }
 }

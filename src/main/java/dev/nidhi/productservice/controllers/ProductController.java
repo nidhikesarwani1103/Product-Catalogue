@@ -3,13 +3,13 @@ package dev.nidhi.productservice.controllers;
 import dev.nidhi.productservice.dtos.ProductDTO;
 import dev.nidhi.productservice.models.Product;
 import dev.nidhi.productservice.services.ProductService;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.http.HttpResponse;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/products")
@@ -30,12 +30,19 @@ public class ProductController {
     }
 
     @GetMapping("")
-    public ResponseEntity<List<ProductDTO>> getAllProducts() {
-        List<Product> products = productService.getAllProducts();
-        List<ProductDTO> productDTOS = products
-                .stream()
-                .map(product -> ProductDTO.fromProduct(product))
-                .toList();
+    public ResponseEntity<Page<ProductDTO>> getAllProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id,asc") String sort,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Long categoryId
+            ) {
+
+        Page<Product> products = productService.getProducts(page, size,
+                sort, search, categoryId);
+
+        Page<ProductDTO> productDTOS = products
+                .map(product -> ProductDTO.fromProduct(product));
 
         return ResponseEntity.ok(productDTOS);
     }
@@ -84,9 +91,5 @@ public class ProductController {
         return ResponseEntity.ok(responseList);
     }
 
-//    @GetMapping("/me")
-//    public String me(Authentication authentication) {
-//
-//        return authentication.getAuthorities().toString();
-//    }
+
 }

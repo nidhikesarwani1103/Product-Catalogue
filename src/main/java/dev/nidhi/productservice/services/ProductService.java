@@ -6,17 +6,23 @@ import dev.nidhi.productservice.models.Category;
 import dev.nidhi.productservice.models.Product;
 import dev.nidhi.productservice.repositories.CategoryRepository;
 import dev.nidhi.productservice.repositories.ProductRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.spi.CurrencyNameProvider;
+import java.util.Set;
 
 @Service("ProductServiceDBImpl")
 public class ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private static final Set<String> ALLOWED_SORT_FIELDS =
+            Set.of("id", "title", "description","createdAt", "updatedAt");
 
     public ProductService(ProductRepository productRepository,
                           CategoryRepository categoryRepository) {
@@ -134,4 +140,54 @@ public class ProductService {
         }
         return categoryEntity;
     }
+
+    public Page<Product> getProducts(int page, int size){
+        Pageable pageable = PageRequest.of(page, size);
+        return productRepository.findAll(pageable);
+    }
+
+    public Page<Product> getProducts(int page, int size,
+                                     String sort,
+                                     String search,
+                                     Long categoryId){
+
+        if(page<0 || size>20 || size<1){
+            throw new IllegalArgumentException("Page should be greater " +
+                    "than 0 and size must between 1 and 20");
+        }
+
+        String[] sortParts = sort.split(",");
+
+        String sortBy = sortParts[0];
+
+        if(!ALLOWED_SORT_FIELDS.contains(sortBy)){
+            throw new IllegalArgumentException("Sort field is invalid");
+        }
+
+        String direction = (sortParts.length>1)?sortParts[1]:"asc";
+
+        Sort sortOrder = direction.equalsIgnoreCase("asc")?
+                Sort.by(sortBy).ascending():
+                Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(page, size, sortOrder);
+
+        if(categoryId!=null && search!=null && !search.isBlank()){
+            return productRepository.findByCategoryIdAndTitleContainingIgnoreCase(
+                    categoryId, search, pageable
+            );
+        }
+
+        if(categoryId!=null){
+          return productRepository.findByCategoryId(categoryId, pageable);
+        }
+
+        if(search!=null && !search.isBlank()){
+            return productRepository.findByTitleContainingIgnoreCase(search, pageable);
+        }
+
+        return productRepository.findAll(pageable);
+    }
+
+
 }

@@ -15,4 +15,9 @@ public class GlobalExceptionHandler {
     public String handleRuntimeException(RuntimeException e) {
         return "Runtime exception occurred: " + e.getMessage();
     }
+
+    @ExceptionHandler
+    public String handleIllegalArgumentException(IllegalArgumentException e){
+        return e.getMessage();
+    }
 }

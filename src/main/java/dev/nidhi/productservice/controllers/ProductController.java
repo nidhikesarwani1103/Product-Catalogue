@@ -35,11 +35,13 @@ public class ProductController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id,asc") String sort,
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) Long categoryId
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice
             ) {
 
         Page<Product> products = productService.getProducts(page, size,
-                sort, search, categoryId);
+                sort, search, categoryId, minPrice, maxPrice);
 
         Page<ProductDTO> productDTOS = products
                 .map(product -> ProductDTO.fromProduct(product));

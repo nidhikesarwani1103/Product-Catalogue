@@ -6,10 +6,12 @@ import dev.nidhi.productservice.models.Category;
 import dev.nidhi.productservice.models.Product;
 import dev.nidhi.productservice.repositories.CategoryRepository;
 import dev.nidhi.productservice.repositories.ProductRepository;
+import dev.nidhi.productservice.specification.ProductSpecification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,7 +24,7 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private static final Set<String> ALLOWED_SORT_FIELDS =
-            Set.of("id", "title", "description","createdAt", "updatedAt");
+            Set.of("id", "title", "price","createdAt", "updatedAt");
 
     public ProductService(ProductRepository productRepository,
                           CategoryRepository categoryRepository) {
@@ -149,7 +151,9 @@ public class ProductService {
     public Page<Product> getProducts(int page, int size,
                                      String sort,
                                      String search,
-                                     Long categoryId){
+                                     Long categoryId,
+                                     Double minPrice,
+                                     Double maxPrice){
 
         if(page<0 || size>20 || size<1){
             throw new IllegalArgumentException("Page should be greater " +
@@ -172,21 +176,41 @@ public class ProductService {
 
         Pageable pageable = PageRequest.of(page, size, sortOrder);
 
-        if(categoryId!=null && search!=null && !search.isBlank()){
-            return productRepository.findByCategoryIdAndTitleContainingIgnoreCase(
-                    categoryId, search, pageable
-            );
+        Specification<Product> specification = null;
+
+        if(search!=null && !search.isBlank()){
+            specification = ProductSpecification.hasTitleContaining(search);
         }
 
         if(categoryId!=null){
-          return productRepository.findByCategoryId(categoryId, pageable);
+            Specification<Product> categorySpecification =
+                    ProductSpecification.hasCategoryId(categoryId);
+
+            specification = specification == null ?
+                    categorySpecification : specification.and(categorySpecification);
         }
 
-        if(search!=null && !search.isBlank()){
-            return productRepository.findByTitleContainingIgnoreCase(search, pageable);
+        if(minPrice!=null){
+            Specification<Product> minPriceSpecification =
+                    ProductSpecification.hasMinPrice(minPrice);
+
+            specification = specification==null ?
+                    minPriceSpecification : specification.and(minPriceSpecification);
         }
 
-        return productRepository.findAll(pageable);
+        if(maxPrice!=null){
+            Specification<Product> maxPriceSpecification =
+                    ProductSpecification.hasMaxPrice(maxPrice);
+
+            specification = specification == null ?
+                    maxPriceSpecification : specification.and(maxPriceSpecification);
+        }
+
+        if (specification == null) {
+            return productRepository.findAll(pageable);
+        }
+
+      return productRepository.findAll(specification, pageable);
     }
 
 

@@ -14,6 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -149,7 +150,7 @@ public class ProductService {
     }
 
     public Page<Product> getProducts(int page, int size,
-                                     String sort,
+                                     List<String> sort,
                                      String search,
                                      Long categoryId,
                                      Double minPrice,
@@ -160,58 +161,31 @@ public class ProductService {
                     "than 0 and size must between 1 and 20");
         }
 
-        String[] sortParts = sort.split(",");
+        List<Sort.Order> orders = new ArrayList<>();
 
-        String sortBy = sortParts[0];
+        for(String s : sort){
+            String[] sortParts = s.split(",");
 
-        if(!ALLOWED_SORT_FIELDS.contains(sortBy)){
-            throw new IllegalArgumentException("Sort field is invalid");
+            String sortBy = sortParts[0];
+
+            if(!ALLOWED_SORT_FIELDS.contains(sortBy)){
+                throw new IllegalArgumentException("Sort field is invalid");
+            }
+
+            String direction = (sortParts.length>1)?sortParts[1]:"asc";
+
+            orders.add(direction.equalsIgnoreCase("asc")?
+                   Sort.Order.asc(sortBy):
+                   Sort.Order.desc(sortBy));
         }
 
-        String direction = (sortParts.length>1)?sortParts[1]:"asc";
-
-        Sort sortOrder = direction.equalsIgnoreCase("asc")?
-                Sort.by(sortBy).ascending():
-                Sort.by(sortBy).descending();
+        Sort sortOrder  = Sort.by(orders);
 
         Pageable pageable = PageRequest.of(page, size, sortOrder);
 
-        Specification<Product> specification = null;
-
-        if(search!=null && !search.isBlank()){
-            specification = ProductSpecification.hasTitleContaining(search);
-        }
-
-        if(categoryId!=null){
-            Specification<Product> categorySpecification =
-                    ProductSpecification.hasCategoryId(categoryId);
-
-            specification = specification == null ?
-                    categorySpecification : specification.and(categorySpecification);
-        }
-
-        if(minPrice!=null){
-            Specification<Product> minPriceSpecification =
-                    ProductSpecification.hasMinPrice(minPrice);
-
-            specification = specification==null ?
-                    minPriceSpecification : specification.and(minPriceSpecification);
-        }
-
-        if(maxPrice!=null){
-            Specification<Product> maxPriceSpecification =
-                    ProductSpecification.hasMaxPrice(maxPrice);
-
-            specification = specification == null ?
-                    maxPriceSpecification : specification.and(maxPriceSpecification);
-        }
-
-        if (specification == null) {
-            return productRepository.findAll(pageable);
-        }
+        Specification<Product> specification = ProductSpecification.
+                build(search, categoryId, minPrice, maxPrice);
 
       return productRepository.findAll(specification, pageable);
     }
-
-
 }

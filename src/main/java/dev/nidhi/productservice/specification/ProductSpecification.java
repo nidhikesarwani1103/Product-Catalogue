@@ -37,4 +37,47 @@ public class ProductSpecification {
                 );
     }
 
+    public static Specification<Product> isNotDeleted(){
+        return (root, query, criteriaBuilder) ->
+                criteriaBuilder.isFalse(root.get("isDeleted"));
+    }
+
+    public static Specification<Product> build(String search,
+                                               Long categoryId,
+                                               Double minPrice,
+                                               Double maxPrice){
+
+        Specification<Product> specification =
+                ProductSpecification.isNotDeleted();
+
+        if(search!=null && !search.isBlank()){
+            Specification<Product> searchSpecification =
+                    ProductSpecification.hasTitleContaining(search);
+
+            specification = specification.and(searchSpecification);
+        }
+
+        if(categoryId!=null){
+            Specification<Product> categorySpecification =
+                    ProductSpecification.hasCategoryId(categoryId);
+
+            specification = specification.and(categorySpecification);
+        }
+
+        if(minPrice!=null){
+            Specification<Product> minPriceSpecification =
+                    ProductSpecification.hasMinPrice(minPrice);
+
+            specification = specification.and(minPriceSpecification);
+        }
+
+        if(maxPrice!=null){
+            Specification<Product> maxPriceSpecification =
+                    ProductSpecification.hasMaxPrice(maxPrice);
+
+            specification = specification.and(maxPriceSpecification);
+        }
+      return specification;
+    }
+
 }

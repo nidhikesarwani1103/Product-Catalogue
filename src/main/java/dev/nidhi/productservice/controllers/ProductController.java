@@ -3,6 +3,7 @@ package dev.nidhi.productservice.controllers;
 import dev.nidhi.productservice.dtos.ProductDTO;
 import dev.nidhi.productservice.models.Product;
 import dev.nidhi.productservice.services.ProductService;
+import dev.nidhi.productservice.services.RedisService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,9 +18,12 @@ import java.util.Set;
 public class ProductController {
 
     private final ProductService productService;
+    private final RedisService redisService;
 
-    public ProductController(ProductService productService) {
+    public ProductController(ProductService productService,
+                             RedisService redisService) {
         this.productService = productService;
+        this.redisService = redisService;
     }
 
     @PostMapping("")
@@ -66,8 +70,20 @@ public class ProductController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ProductDTO> getProductById(@PathVariable("id") Long id){
-        Product product = productService.getProductById(id);
-        return ResponseEntity.ok(ProductDTO.fromProduct(product));
+        ProductDTO productDTO = redisService.
+                                       get(
+                                       "PRODUCTS",
+                                       "PRODUCTS:"+id,
+                                       ProductDTO.class);
+
+        if(productDTO == null){
+            System.out.println("Cache miss!");
+            Product product = productService.getProductById(id);
+            productDTO = ProductDTO.fromProduct(product);
+            redisService.save("PRODUCTS", "PRODUCTS:"+id, productDTO);
+        }
+
+        return ResponseEntity.ok(productDTO);
     }
 
     @PutMapping("/{id}")

@@ -4,9 +4,11 @@ import dev.nidhi.productservice.models.Category;
 import dev.nidhi.productservice.models.Product;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Setter
 @Getter
+@ToString
 public class ProductDTO {
     private Long id;
     private String title;
